@@ -6,7 +6,10 @@ import { useProxy } from "#/contexts/ProxyContext";
 import { useAuthenticated } from "#/hooks/useAuthenticated";
 import { useEmbeddedMetadata } from "#/hooks/useEmbeddedMetadata";
 import { useDashboard } from "#/modules/dashboard/useDashboard";
-import { canViewDeploymentSettings } from "#/modules/permissions";
+import {
+	canViewDashboard,
+	canViewDeploymentSettings,
+} from "#/modules/permissions";
 import { useFeatureVisibility } from "../useFeatureVisibility";
 import { NavbarView } from "./NavbarView";
 
@@ -19,6 +22,7 @@ export const Navbar: FC = () => {
 	const proxyContextValue = useProxy();
 
 	const canViewDeployment = canViewDeploymentSettings(permissions);
+	const canViewDashboardLinks = canViewDashboard(permissions);
 	const canViewOrganizations = canViewOrganizationSettings;
 	const canViewHealth = permissions.viewDebugInfo;
 	const canViewAuditLog =
@@ -45,6 +49,7 @@ export const Navbar: FC = () => {
 			buildInfo={buildInfoQuery.data}
 			supportLinks={Array.from(uniqueLinks.values())}
 			onSignOut={signOut}
+			canViewDashboard={canViewDashboardLinks}
 			canViewDeployment={canViewDeployment}
 			canViewOrganizations={canViewOrganizations}
 			canViewHealth={canViewHealth}

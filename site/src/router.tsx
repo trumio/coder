@@ -14,6 +14,7 @@ import { Loader } from "./components/Loader/Loader";
 import { RequireAuth } from "./contexts/auth/RequireAuth";
 import { useAuthenticated } from "./hooks/useAuthenticated";
 import { DashboardLayout } from "./modules/dashboard/DashboardLayout";
+import AccessPage from "./pages/AccessPage/AccessPage";
 import AuditPage from "./pages/AuditPage/AuditPage";
 import ConnectionLogPage from "./pages/ConnectionLogPage/ConnectionLogPage";
 import { HealthLayout } from "./pages/HealthPage/HealthLayout";
@@ -571,6 +572,10 @@ export const router = createBrowserRouter(
 
 			{/* Dashboard routes */}
 			<Route element={<RequireAuth />}>
+				{/* Standalone page for non-admins denied the dashboard. Outside
+				    DashboardLayout so the admin guard there cannot redirect-loop. */}
+				<Route path="access" element={<AccessPage />} />
+
 				<Route element={<DashboardLayout />}>
 					<Route index element={<Navigate to="/workspaces" replace />} />
 

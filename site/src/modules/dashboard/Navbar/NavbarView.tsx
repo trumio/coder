@@ -27,6 +27,7 @@ interface NavbarViewProps {
 	buildInfo?: TypesGen.BuildInfoResponse;
 	supportLinks: readonly TypesGen.LinkConfig[];
 	onSignOut: () => void;
+	canViewDashboard: boolean;
 	canViewDeployment: boolean;
 	canViewOrganizations: boolean;
 	canViewAuditLog: boolean;
@@ -49,6 +50,7 @@ export const NavbarView: FC<NavbarViewProps> = ({
 	buildInfo,
 	supportLinks,
 	onSignOut,
+	canViewDashboard,
 	canViewDeployment,
 	canViewOrganizations,
 	canViewHealth,
@@ -88,6 +90,7 @@ export const NavbarView: FC<NavbarViewProps> = ({
 			<NavItems
 				className="ml-4 hidden md:flex"
 				user={user}
+				canViewDashboard={canViewDashboard}
 				canCreateChat={canCreateChat}
 			/>
 
@@ -162,6 +165,7 @@ export const NavbarView: FC<NavbarViewProps> = ({
 						user={user}
 						supportLinks={supportLinks}
 						onSignOut={onSignOut}
+						canViewDashboard={canViewDashboard}
 						canViewAuditLog={canViewAuditLog}
 						canViewConnectionLog={canViewConnectionLog}
 						canViewOrganizations={canViewOrganizations}
@@ -177,33 +181,43 @@ export const NavbarView: FC<NavbarViewProps> = ({
 interface NavItemsProps {
 	className?: string;
 	user: TypesGen.User;
+	canViewDashboard: boolean;
 	canCreateChat: boolean;
 }
 
-const NavItems: FC<NavItemsProps> = ({ className, user, canCreateChat }) => {
+const NavItems: FC<NavItemsProps> = ({
+	className,
+	user,
+	canViewDashboard,
+	canCreateChat,
+}) => {
 	const location = useLocation();
 
 	return (
 		<nav className={cn("flex items-center gap-4 h-full", className)}>
-			<NavLink
-				className={({ isActive }) => {
-					if (location.pathname.startsWith("/@")) {
-						isActive = true;
-					}
-					return cn(linkStyles.default, { [linkStyles.active]: isActive });
-				}}
-				to="/workspaces"
-			>
-				Workspaces
-			</NavLink>
-			<NavLink
-				className={({ isActive }) => {
-					return cn(linkStyles.default, { [linkStyles.active]: isActive });
-				}}
-				to="/templates"
-			>
-				Templates
-			</NavLink>
+			{canViewDashboard && (
+				<>
+					<NavLink
+						className={({ isActive }) => {
+							if (location.pathname.startsWith("/@")) {
+								isActive = true;
+							}
+							return cn(linkStyles.default, { [linkStyles.active]: isActive });
+						}}
+						to="/workspaces"
+					>
+						Workspaces
+					</NavLink>
+					<NavLink
+						className={({ isActive }) => {
+							return cn(linkStyles.default, { [linkStyles.active]: isActive });
+						}}
+						to="/templates"
+					>
+						Templates
+					</NavLink>
+				</>
+			)}
 			<TasksNavItem user={user} />
 			<AgentsNavItem canCreateChat={canCreateChat} />
 		</nav>

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { userEvent, within } from "storybook/test";
+import { expect, userEvent, within } from "storybook/test";
 import type { TasksFilter } from "#/api/typesGenerated";
 import { chromaticWithTablet } from "#/testHelpers/chromatic";
 import {
@@ -30,6 +30,7 @@ const meta: Meta<typeof NavbarView> = {
 	component: NavbarView,
 	args: {
 		user: MockUserOwner,
+		canViewDashboard: true,
 		canViewAuditLog: true,
 		canViewDeployment: true,
 		canViewHealth: true,
@@ -112,6 +113,26 @@ export const ForMember: Story = {
 		canViewAISettings: false,
 		canViewOrganizations: false,
 		canCreateChat: false,
+	},
+};
+
+export const NonAdmin: Story = {
+	args: {
+		user: MockUserMember,
+		canViewDashboard: false,
+		canViewAuditLog: false,
+		canViewDeployment: false,
+		canViewHealth: false,
+		canViewAISettings: false,
+		canViewOrganizations: false,
+		canCreateChat: false,
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole("link", { name: /workspaces/i }),
+		).toBeNull();
+		await expect(canvas.queryByRole("link", { name: /templates/i })).toBeNull();
 	},
 };
 

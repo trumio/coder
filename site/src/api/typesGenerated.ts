@@ -4360,6 +4360,7 @@ export interface DeploymentValues {
 	readonly disable_path_apps?: boolean;
 	readonly session_lifetime?: SessionLifetime;
 	readonly disable_password_auth?: boolean;
+	readonly platform_auth?: PlatformAuthConfig;
 	readonly support?: SupportConfig;
 	readonly enable_authz_recording?: boolean;
 	readonly external_auth?: SerpentStruct<ExternalAuthConfig[]>;
@@ -6575,6 +6576,43 @@ export interface Permission {
 	readonly negate: boolean;
 	readonly resource_type: RBACResource;
 	readonly action: RBACAction;
+}
+
+// From codersdk/deployment.go
+/**
+ * PlatformAuthConfig configures the platform-cookie authentication bridge. When
+ * enabled, a request to open a workspace app that carries the platform session
+ * cookie is validated against an external backend, which returns the owning
+ * user's email. Coder then mints a session for that user so they land directly
+ * in the app without seeing the login page. Coder performs no token
+ * verification itself; the backend is the sole authority.
+ */
+export interface PlatformAuthConfig {
+	readonly enable: boolean;
+	readonly cookie_name: string;
+	/**
+	 * ValidateURLs is the ordered list of backend endpoints that validate the
+	 * platform cookie. Each may contain a literal "{env}" placeholder, replaced
+	 * with the environment derived from the workspace name suffix (e.g. "dev",
+	 * "prod"). When a single Coder deployment serves multiple platform
+	 * environments, list one endpoint per environment; Coder tries them in
+	 * order and the first to accept the cookie wins.
+	 */
+	readonly validate_urls: string;
+	/**
+	 * Envs is the set of allowed environment suffixes. A workspace name whose
+	 * final "-" delimited segment is not in this set is not bridged.
+	 */
+	readonly envs: string;
+	readonly request_timeout: number;
+	/**
+	 * LoginRedirectURL, when set, is where an unauthenticated workspace-app
+	 * request is redirected instead of the Coder login page, so users
+	 * re-authenticate with the platform rather than seeing Coder's own login.
+	 * A literal "{redirect}" placeholder is replaced with the URL-encoded
+	 * original app URL so the platform can send the user back after login.
+	 */
+	readonly login_redirect_url: string;
 }
 
 // From codersdk/oauth2.go

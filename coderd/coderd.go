@@ -1039,6 +1039,10 @@ func New(options *Options) *API {
 		}),
 		singleSlashMW,
 		rolestore.CustomRoleMW,
+		// Bridge platform-cookie auth into a Coder session before the API key is
+		// prechecked, so opening a workspace app with a valid platform cookie
+		// authenticates the request without a login redirect.
+		api.platformAuthBridgeMW,
 		// Validate API key on every request (if present) and store
 		// the result in context. The rate limiter reads this to key
 		// by user ID, and downstream ExtractAPIKeyMW reuses it to
@@ -1083,6 +1087,10 @@ func New(options *Options) *API {
 	r.Get("/latency-check", tracing.StatusWriterMiddleware(prometheusMW(LatencyCheck())).ServeHTTP)
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write([]byte("OK")) })
+
+	// Redirects non-admin users from the dashboard to the platform login. Public
+	// so it works before any Coder session exists.
+	r.Get("/platform-login", api.platformLoginRedirect)
 
 	// Attach workspace apps routes.
 	r.Group(func(r chi.Router) {

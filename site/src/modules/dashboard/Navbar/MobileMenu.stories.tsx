@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { FC } from "react";
-import { fn, userEvent, within } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import {
 	MockPrimaryWorkspaceProxy,
 	MockProxyLatencies,
@@ -40,6 +40,7 @@ const meta: Meta<typeof MobileMenu> = {
 		supportLinks: MockSupportLinks,
 		onSignOut: fn(),
 		isDefaultOpen: true,
+		canViewDashboard: true,
 		canViewAuditLog: true,
 		canViewDeployment: true,
 		canViewHealth: true,
@@ -90,6 +91,26 @@ export const Member: Story = {
 		canViewDeployment: false,
 		canViewHealth: false,
 		canViewOrganizations: false,
+	},
+};
+
+export const NonAdmin: Story = {
+	args: {
+		user: MockUserMember,
+		canViewDashboard: false,
+		canViewAuditLog: false,
+		canViewDeployment: false,
+		canViewHealth: false,
+		canViewOrganizations: false,
+	},
+	play: async ({ canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		await expect(
+			body.queryByRole("menuitem", { name: /workspaces/i }),
+		).toBeNull();
+		await expect(
+			body.queryByRole("menuitem", { name: /templates/i }),
+		).toBeNull();
 	},
 };
 

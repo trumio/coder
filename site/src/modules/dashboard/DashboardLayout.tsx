@@ -2,12 +2,13 @@ import Link from "@mui/material/Link";
 import Snackbar from "@mui/material/Snackbar";
 import { InfoIcon } from "lucide-react";
 import { type FC, type HTMLAttributes, Suspense } from "react";
-import { Outlet } from "react-router";
+import { Navigate, Outlet } from "react-router";
 import { Button } from "#/components/Button/Button";
 import { Loader } from "#/components/Loader/Loader";
 import { useAuthenticated } from "#/hooks/useAuthenticated";
 import { AnnouncementBanners } from "#/modules/dashboard/AnnouncementBanners/AnnouncementBanners";
 import { LicenseBanner } from "#/modules/dashboard/LicenseBanner/LicenseBanner";
+import { canViewDashboard } from "#/modules/permissions";
 import { cn } from "#/utils/cn";
 import { docs } from "#/utils/docs";
 import { DeploymentBanner } from "./DeploymentBanner/DeploymentBanner";
@@ -18,6 +19,12 @@ export const DashboardLayout: FC = () => {
 	const { permissions } = useAuthenticated();
 	const updateCheck = useUpdateCheck(permissions.viewDeploymentConfig);
 	const canViewDeployment = Boolean(permissions.viewDeploymentConfig);
+
+	// The dashboard is admin-only. Non-admins (e.g. platform members) are sent
+	// to the standalone /access page, which links back to the platform.
+	if (!canViewDashboard(permissions)) {
+		return <Navigate to="/access" replace />;
+	}
 
 	return (
 		<>

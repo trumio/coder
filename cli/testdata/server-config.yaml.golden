@@ -559,6 +559,38 @@ disableWorkspaceSharing: false
 # their chats.
 # (default: <unset>, type: bool)
 disableChatSharing: false
+platformAuth:
+  # Enable the platform-cookie authentication bridge. When enabled, opening a
+  # workspace app with a valid platform session cookie logs the user in via the
+  # external backend and skips the login page.
+  # (default: true, type: bool)
+  enable: true
+  # Name of the platform session cookie that Coder reads and forwards to the backend
+  # for validation.
+  # (default: access_token, type: string)
+  cookieName: access_token
+  # Ordered list of backend endpoints that validate the platform cookie and return
+  # the owning user's email as JSON. Each may contain a literal "{env}" placeholder,
+  # replaced with the environment derived from the workspace name suffix. When one
+  # Coder deployment serves multiple platform environments, list one endpoint per
+  # environment; Coder tries them in order and the first to accept the cookie wins.
+  # (default: <unset>, type: string-array)
+  validateURLs: []
+  # Allowed environment suffixes. A workspace whose name does not end in one of
+  # these (after the final "-") is not bridged.
+  # (default: dev,uat,prod, type: string-array)
+  envs:
+    - dev
+    - uat
+    - prod
+  # Timeout for the backend validation request.
+  # (default: 5s, type: duration)
+  requestTimeout: 5s
+  # Where to redirect an unauthenticated workspace-app request instead of the Coder
+  # login page, so the user re-authenticates with the platform. A literal
+  # "{redirect}" placeholder is replaced with the URL-encoded original app URL.
+  # (default: <unset>, type: string)
+  loginRedirectURL: ""
 # These options change the behavior of how clients interact with the Coder.
 # Clients include the Coder CLI, Coder Desktop, IDE extensions, and the web UI.
 client:

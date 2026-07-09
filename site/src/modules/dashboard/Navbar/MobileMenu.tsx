@@ -47,6 +47,7 @@ type MobileMenuProps = MobileMenuPermissions & {
 	user?: TypesGen.User;
 	supportLinks?: readonly TypesGen.LinkConfig[];
 	onSignOut: () => void;
+	canViewDashboard: boolean;
 	isDefaultOpen?: boolean; // Useful for storybook
 };
 
@@ -56,6 +57,7 @@ export const MobileMenu: FC<MobileMenuProps> = ({
 	user,
 	supportLinks,
 	onSignOut,
+	canViewDashboard,
 	...permissions
 }) => {
 	const [open, setOpen] = useState(isDefaultOpen);
@@ -79,12 +81,16 @@ export const MobileMenu: FC<MobileMenuProps> = ({
 				className="w-screen border-0 border-b border-solid p-0 py-2"
 				sideOffset={17}
 			>
-				<DropdownMenuItem asChild className={itemStyles.default}>
-					<Link to="/workspaces">Workspaces</Link>
-				</DropdownMenuItem>
-				<DropdownMenuItem asChild className={itemStyles.default}>
-					<Link to="/templates">Templates</Link>
-				</DropdownMenuItem>
+				{canViewDashboard && (
+					<>
+						<DropdownMenuItem asChild className={itemStyles.default}>
+							<Link to="/workspaces">Workspaces</Link>
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild className={itemStyles.default}>
+							<Link to="/templates">Templates</Link>
+						</DropdownMenuItem>
+					</>
+				)}
 				<DropdownMenuItem asChild className={itemStyles.default}>
 					<Link to="/agents">Agents</Link>
 				</DropdownMenuItem>
