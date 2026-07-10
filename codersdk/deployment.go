@@ -661,6 +661,7 @@ type DeploymentValues struct {
 	DisablePathApps                         serpent.Bool                         `json:"disable_path_apps,omitempty" typescript:",notnull"`
 	Sessions                                SessionLifetime                      `json:"session_lifetime,omitempty" typescript:",notnull"`
 	DisablePasswordAuth                     serpent.Bool                         `json:"disable_password_auth,omitempty" typescript:",notnull"`
+	PlatformAuth                            PlatformAuthConfig                   `json:"platform_auth,omitempty" typescript:",notnull"`
 	Support                                 SupportConfig                        `json:"support,omitempty" typescript:",notnull"`
 	EnableAuthzRecording                    serpent.Bool                         `json:"enable_authz_recording,omitempty" typescript:",notnull"`
 	ExternalAuthConfigs                     serpent.Struct[[]ExternalAuthConfig] `json:"external_auth,omitempty" typescript:",notnull"`
@@ -979,6 +980,34 @@ type OIDCConfig struct {
 	// brokers that do not issue a stable `sub` for the same user across
 	// connections.
 	EmailFallback serpent.Bool `json:"email_fallback" typescript:",notnull"`
+}
+
+// PlatformAuthConfig configures the platform-cookie authentication bridge. When
+// enabled, a request to open a workspace app that carries the platform session
+// cookie is validated against an external backend, which returns the owning
+// user's email. Coder then mints a session for that user so they land directly
+// in the app without seeing the login page. Coder performs no token
+// verification itself; the backend is the sole authority.
+type PlatformAuthConfig struct {
+	Enable     serpent.Bool   `json:"enable" typescript:",notnull"`
+	CookieName serpent.String `json:"cookie_name" typescript:",notnull"`
+	// ValidateURLs is the ordered list of backend endpoints that validate the
+	// platform cookie. Each may contain a literal "{env}" placeholder, replaced
+	// with the environment derived from the workspace name suffix (e.g. "dev",
+	// "prod"). When a single Coder deployment serves multiple platform
+	// environments, list one endpoint per environment; Coder tries them in
+	// order and the first to accept the cookie wins.
+	ValidateURLs serpent.StringArray `json:"validate_urls" typescript:",notnull"`
+	// Envs is the set of allowed environment suffixes. A workspace name whose
+	// final "-" delimited segment is not in this set is not bridged.
+	Envs           serpent.StringArray `json:"envs" typescript:",notnull"`
+	RequestTimeout serpent.Duration    `json:"request_timeout" typescript:",notnull"`
+	// LoginRedirectURL, when set, is where an unauthenticated workspace-app
+	// request is redirected instead of the Coder login page, so users
+	// re-authenticate with the platform rather than seeing Coder's own login.
+	// A literal "{redirect}" placeholder is replaced with the URL-encoded
+	// original app URL so the platform can send the user back after login.
+	LoginRedirectURL serpent.String `json:"login_redirect_url" typescript:",notnull"`
 }
 
 type TelemetryConfig struct {
@@ -1522,6 +1551,10 @@ communicating directly.`,
 		deploymentGroupOIDC = serpent.Group{
 			Name: "OIDC",
 			YAML: "oidc",
+		}
+		deploymentGroupPlatformAuth = serpent.Group{
+			Name: "Platform Auth",
+			YAML: "platformAuth",
 		}
 		deploymentGroupTelemetry = serpent.Group{
 			Name: "Telemetry",
@@ -3710,6 +3743,65 @@ communicating directly.`,
 			Value: &c.DisablePasswordAuth,
 			Group: &deploymentGroupNetworkingHTTP,
 			YAML:  "disablePasswordAuth",
+		},
+		// Platform Auth settings.
+		{
+			Name:        "Platform Auth Enable",
+			Description: "Enable the platform-cookie authentication bridge. When enabled, opening a workspace app with a valid platform session cookie logs the user in via the external backend and skips the login page.",
+			Flag:        "platform-auth-enable",
+			Env:         "CODER_PLATFORM_AUTH_ENABLE",
+			Default:     "true",
+			Value:       &c.PlatformAuth.Enable,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "enable",
+		},
+		{
+			Name:        "Platform Auth Cookie Name",
+			Description: "Name of the platform session cookie that Coder reads and forwards to the backend for validation.",
+			Flag:        "platform-auth-cookie-name",
+			Env:         "CODER_PLATFORM_AUTH_COOKIE_NAME",
+			Default:     "access_token",
+			Value:       &c.PlatformAuth.CookieName,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "cookieName",
+		},
+		{
+			Name:        "Platform Auth Validate URLs",
+			Description: "Ordered list of backend endpoints that validate the platform cookie and return the owning user's email as JSON. Each may contain a literal \"{env}\" placeholder, replaced with the environment derived from the workspace name suffix. When one Coder deployment serves multiple platform environments, list one endpoint per environment; Coder tries them in order and the first to accept the cookie wins.",
+			Flag:        "platform-auth-validate-urls",
+			Env:         "CODER_PLATFORM_AUTH_VALIDATE_URLS",
+			Value:       &c.PlatformAuth.ValidateURLs,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "validateURLs",
+		},
+		{
+			Name:        "Platform Auth Environments",
+			Description: "Allowed environment suffixes. A workspace whose name does not end in one of these (after the final \"-\") is not bridged.",
+			Flag:        "platform-auth-envs",
+			Env:         "CODER_PLATFORM_AUTH_ENVS",
+			Default:     "dev,uat,prod",
+			Value:       &c.PlatformAuth.Envs,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "envs",
+		},
+		{
+			Name:        "Platform Auth Request Timeout",
+			Description: "Timeout for the backend validation request.",
+			Flag:        "platform-auth-request-timeout",
+			Env:         "CODER_PLATFORM_AUTH_REQUEST_TIMEOUT",
+			Default:     (5 * time.Second).String(),
+			Value:       &c.PlatformAuth.RequestTimeout,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "requestTimeout",
+		},
+		{
+			Name:        "Platform Auth Login Redirect URL",
+			Description: "Where to redirect an unauthenticated workspace-app request instead of the Coder login page, so the user re-authenticates with the platform. A literal \"{redirect}\" placeholder is replaced with the URL-encoded original app URL.",
+			Flag:        "platform-auth-login-redirect-url",
+			Env:         "CODER_PLATFORM_AUTH_LOGIN_REDIRECT_URL",
+			Value:       &c.PlatformAuth.LoginRedirectURL,
+			Group:       &deploymentGroupPlatformAuth,
+			YAML:        "loginRedirectURL",
 		},
 		{
 			Name:          "Config Path",
