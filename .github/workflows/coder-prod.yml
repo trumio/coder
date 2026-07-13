@@ -1,21 +1,16 @@
-name: content-studio-be-cd-prod
+name: coder-deployment-prod
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Deployment-Release"]
-    # branches: [uat]
-    types:
-      - completed
 
 permissions:
   id-token: write
   contents: write
 
 env:
-  IMAGE_NAME: content_studio_be
+  IMAGE_NAME: coder_prod
 
 jobs:
-  content-studio-cd-prod:
+  coder-deployment-prod:
     runs-on: ${{ vars.RUNNER }}
     concurrency: release
 
